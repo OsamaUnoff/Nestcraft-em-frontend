@@ -21,14 +21,14 @@ const Campaigns = () => {
   const [isRecipientPreviewOpen, setIsRecipientPreviewOpen] = useState(false);
   const [isSendConfirmationOpen, setIsSendConfirmationOpen] = useState(false);
   const [isSendingProgressOpen, setIsSendingProgressOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filters, setFilters] = useState({
+  const [searchTerm] = useState('');
+  const [filters] = useState({
     status: '',
     dateFrom: '',
     dateTo: '',
     priority: '',
   });
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage] = useState(1);
 
   const [selectedCampaign, setSelectedCampaign] = useState(null);
   const [recipientPreviewCampaign, setRecipientPreviewCampaign] = useState(null);
@@ -109,16 +109,6 @@ const Campaigns = () => {
     },
     onError: (error: any) => {
       toast.error((error as any).error || 'Failed to send campaign');
-    },
-  });
-
-  const spamCheckMutation = useMutation({
-    mutationFn: (id: any) => campaignService.validateCampaign({ campaign_id: id }),
-    onSuccess: () => {
-      toast.success(`Campaign validation completed.`);
-    },
-    onError: (error: any) => {
-      toast.error((error as any).error || 'Failed to run validation');
     },
   });
 
