@@ -22,12 +22,15 @@ const Dashboard = () => {
     dispatch(fetchRecipientLists({ page: 1, per_page: 10 }));
   }, [dispatch]);
 
-  const campaignsArray = campaigns?.data?.campaigns || campaigns?.campaigns || [];
-  const smtpAccountsArray = smtpAccounts?.data?.accounts || smtpAccounts?.accounts || [];
-  const recipientListsArray = recipientLists?.data?.lists || recipientLists?.lists || [];
+  const campaignsArray = Array.isArray(campaigns) ? campaigns : Array.isArray(campaigns?.data) ? campaigns.data : [];
+  const smtpAccountsArray = Array.isArray(smtpAccounts) ? smtpAccounts : Array.isArray((smtpAccounts as any)?.data) ? (smtpAccounts as any).data : [];
+  const recipientListsArray = Array.isArray(recipientLists) ? recipientLists : Array.isArray((recipientLists as any)?.data) ? (recipientLists as any).data : [];
 
-  const totalRecipients = recipientListsArray.reduce((sum: any, list: any) => sum + (list.recipient_count || 0), 0);
-  const activeCampaigns = campaignsArray.filter((campaign: any) => campaign.status === 'active').length;
+  const totalRecipients = recipientListsArray.reduce((sum: number, list: any) => {
+    const count = list.recipient_count ?? list.total_recipients ?? list.active_recipients ?? 0;
+    return sum + Number(count || 0);
+  }, 0);
+  const activeCampaigns = campaignsArray.filter((campaign: any) => ['scheduled', 'sending'].includes(campaign.status)).length;
   const activeSMTPAccounts = smtpAccountsArray.filter((account: any) => account.is_active).length;
 
   const recentCampaigns = campaignsArray.slice(0, 5);
@@ -116,19 +119,22 @@ const Dashboard = () => {
                       </div>
                     </div>
                     <div className="flex items-center">
-                      <span
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          campaign.status === 'active'
-                            ? 'bg-green-100 text-green-800'
-                            : campaign.status === 'draft'
-                            ? 'bg-gray-100 text-gray-800'
-                            : campaign.status === 'completed'
-                            ? 'bg-blue-100 text-blue-800'
-                            : 'bg-red-100 text-red-800'
-                        }`}
-                      >
-                        {campaign.status}
-                      </span>
+                      {(() => {
+                        const status = campaign.status as string;
+                        const statusClass =
+                          status === 'draft' ? 'bg-gray-100 text-gray-800' :
+                          status === 'scheduled' ? 'bg-blue-100 text-blue-800' :
+                          status === 'sending' ? 'bg-yellow-100 text-yellow-800' :
+                          status === 'sent' || status === 'completed' ? 'bg-green-100 text-green-800' :
+                          status === 'paused' ? 'bg-orange-100 text-orange-800' :
+                          status === 'cancelled' || status === 'failed' ? 'bg-red-100 text-red-800' :
+                          'bg-gray-100 text-gray-800';
+                        return (
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusClass}`}>
+                            {status}
+                          </span>
+                        );
+                      })()}
                     </div>
                   </div>
                 ))}

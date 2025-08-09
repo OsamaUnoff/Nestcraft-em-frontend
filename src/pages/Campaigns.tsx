@@ -51,13 +51,13 @@ const Campaigns = () => {
   });
 
   const { data: listsData } = useQuery({
-    queryKey: ['recipient-lists'],
-    queryFn: () => recipientService.getLists(),
+    queryKey: ['recipient-lists', 1, 50],
+    queryFn: () => recipientService.getLists({ page: 1, per_page: 50 }),
   });
 
   const { data: smtpData } = useQuery({
-    queryKey: ['smtp-accounts'],
-    queryFn: () => smtpService.getAccounts(),
+    queryKey: ['smtp-accounts', 1, 100, true],
+    queryFn: () => smtpService.getAccounts({ page: 1, limit: 100, active_only: true }),
   });
 
   const createBasicCampaignMutation = useMutation({
@@ -113,7 +113,12 @@ const Campaigns = () => {
   });
 
   // Helper functions
-  const campaigns = (campaignsData as any)?.data?.campaigns || (campaignsData as any)?.campaigns || [];
+  // Normalize campaigns array from various possible response shapes
+  const campaigns = Array.isArray((campaignsData as any)?.data)
+    ? (campaignsData as any).data
+    : Array.isArray(campaignsData as any)
+      ? (campaignsData as any)
+      : (campaignsData as any)?.data?.campaigns || (campaignsData as any)?.campaigns || [];
 
   const handleCampaignClick = (campaign: any) => {
     setSelectedCampaign(campaign);
@@ -224,8 +229,26 @@ const Campaigns = () => {
           isOpen={isCreateModalOpen}
           onClose={() => setIsCreateModalOpen(false)}
           onSubmit={handleCreateCampaign}
-          recipientLists={(listsData as any)?.data?.lists || (listsData as any)?.lists || []}
-          smtpAccounts={(smtpData as any)?.data?.accounts || []}
+          recipientLists={(
+            Array.isArray((listsData as any)?.data)
+              ? (listsData as any).data
+              : Array.isArray(listsData as any)
+                ? (listsData as any)
+                : (listsData as any)?.lists || []
+          ).map((list: any) => ({
+            ...list,
+            recipient_count: list.recipient_count ?? list.total_recipients ?? list.active_recipients ?? 0,
+          }))}
+          smtpAccounts={(
+            Array.isArray(smtpData as any)
+              ? (smtpData as any)
+              : Array.isArray((smtpData as any)?.data)
+                ? (smtpData as any).data
+                : (smtpData as any)?.accounts || []
+          ).map((acc: any) => ({
+            ...acc,
+            email: acc.email || acc.username || acc.user || acc.from_email || '',
+          }))}
           isLoading={createBasicCampaignMutation.isPending}
         />
 

@@ -24,15 +24,20 @@ const smtpService = {
     try {
       const response = await apiService.get('/smtp/accounts', { params: defaultParams });
       console.log('✅ SMTP Service - getAccounts response:', response);
-      // Support both { data: { accounts: [...] } } and { accounts: [...] } and flat array
-      if (response && response.data && Array.isArray(response.data.accounts)) {
-        return response.data.accounts;
-      } else if (response && Array.isArray(response.data)) {
-        return response.data;
-      } else {
-        console.warn('⚠️ SMTP Service - Unexpected response format:', response);
-        return [];
+      // apiService returns response.data directly
+      const data: any = response;
+      if (Array.isArray(data)) {
+        return data;
       }
+      if (data && Array.isArray(data.accounts)) {
+        return data.accounts;
+      }
+      if (data && data.data) {
+        if (Array.isArray(data.data)) return data.data;
+        if (Array.isArray(data.data.accounts)) return data.data.accounts;
+      }
+      console.warn('⚠️ SMTP Service - Unexpected response format:', data);
+      return [];
     } catch (error: any) {
       console.error('❌ SMTP Service - getAccounts error:', {
         message: error.message,

@@ -8,7 +8,9 @@ import { apiService } from './api';
 const recipientService = {
   // Recipient List CRUD operations
   getLists: async (params: any = {}) => {
-    const response = await apiService.get('/recipients/lists', { params });
+    // Ensure correct default params per backend contract
+    const defaultParams = { page: 1, per_page: 50, search: '', ...params };
+    const response = await apiService.get('/recipients/lists', { params: defaultParams });
     return response;
   },
 
